@@ -1,7 +1,8 @@
+// LoginPage.js
 import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "./firebaseConfig";
-import "./styles.css"; // Import the CSS file
+import "./styles.css"; // Custom CSS file
 
 export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -18,22 +19,28 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="container">
-      <h2>Login</h2>
-      <input
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-        value={email}
-        type="email"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-        value={password}
-      />
-      <button onClick={handleLogin}>Login</button>
-      {error && <p className="error">{error}</p>}
+    <div className="login-page">
+      <div className="login-card">
+        <h2 className="login-title">Welcome Back</h2>
+        <input
+          className="login-input"
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          className="login-input"
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button className="login-button" onClick={handleLogin}>
+          Login
+        </button>
+        {error && <p className="login-error">{error}</p>}
+      </div>
     </div>
   );
 }
