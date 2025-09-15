@@ -41,18 +41,18 @@ export default function UserData({ user, onLogout }) {
 
         if (data.motorStatusLog) setMotorLog(data.motorStatusLog);
         if (data.heartbeat) setHeartbeat(data.heartbeat);
+if (data.heartbeat?.last_active) {
+  const lastActive = new Date(data.heartbeat.last_active);
+  const now = new Date();
+  const diffMin = (now - lastActive) / (1000 * 60);
 
-        if (data.heartbeat?.last_active) {
-          const lastActive = new Date(data.heartbeat.last_active);
-          const now = new Date();
-          const diffMin = (now - lastActive) / (1000 * 60);
+  if (diffMin <= 3) {
+    setIsOnline(true);
+  } else {
+    setIsOnline(false);
+  }
+}
 
-          if (diffMin <= 2) {
-            setIsOnline(true);
-          } else if (diffMin >= 5) {
-            setIsOnline(false);
-          }
-        }
       } catch (err) {
         console.error("Error fetching motor log + heartbeat:", err);
       }
