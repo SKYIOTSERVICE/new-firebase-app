@@ -47,9 +47,9 @@ export default function UserData({ user, onLogout }) {
           const now = new Date();
           const diffMin = (now - lastActive) / (1000 * 60);
 
-          if (diffMin <= 1) {
+          if (diffMin <= 2) {
             setIsOnline(true);
-          } else if (diffMin >= 2.5) {
+          } else if (diffMin >= 5) {
             setIsOnline(false);
           }
         }
