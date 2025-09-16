@@ -112,7 +112,8 @@ if (data.heartbeat?.last_active) {
     (key) =>
       !displayFields.includes(key) &&
       key !== "email" &&
-      key !== "motorSchedule"
+      key !== "motorSchedule"&&
+      key !== "motorSchedule2"
   );
 
   return (
