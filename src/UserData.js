@@ -114,8 +114,7 @@ export default function UserData({ user, onLogout }) {
     (key) =>
       !displayFields.includes(key) &&
       key !== "email" &&
-      key !== "motorSchedule" &&
-      key !== "motorSchedule2"
+      key !== "motorSchedule" 
   );
 
   return (
