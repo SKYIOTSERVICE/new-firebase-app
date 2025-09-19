@@ -10,9 +10,14 @@ export default function UserData({ user, onLogout }) {
   const [saveStatus, setSaveStatus] = useState("");
   const [motorLog, setMotorLog] = useState(null);
   const [heartbeat, setHeartbeat] = useState(null);
+  const [pzem, setPzem] = useState(null); // 🔌 Voltage/Current/Power
   const [isOnline, setIsOnline] = useState(false);
 
-  
+  // const [isRunning, setIsRunning] = useState(false);
+  // const [countdown, setCountdown] = useState(null);
+  // const [motorDuration, setMotorDuration] = useState(30);
+
+  // Load user profile from realtime db
   useEffect(() => {
     const userRef = ref(database, `user/${user.uid}`);
     const unsubscribe = onValue(userRef, (snapshot) => {
@@ -30,7 +35,7 @@ export default function UserData({ user, onLogout }) {
     return () => unsubscribe();
   }, [user.uid]);
 
-
+  // Fetch heartbeat, motor log, and pzem
   useEffect(() => {
     const fetchStatus = async () => {
       try {
@@ -41,20 +46,17 @@ export default function UserData({ user, onLogout }) {
 
         if (data.motorStatusLog) setMotorLog(data.motorStatusLog);
         if (data.heartbeat) setHeartbeat(data.heartbeat);
-if (data.heartbeat?.last_active) {
-  const lastActive = new Date(data.heartbeat.last_active);
-  const now = new Date();
-  const diffMin = (now - lastActive) / (1000 * 60);
+        if (data.pzem) setPzem(data.pzem);
 
-  if (diffMin <= 3) {
-    setIsOnline(true);
-  } else {
-    setIsOnline(false);
-  }
-}
+        if (data.heartbeat?.last_active) {
+          const lastActive = new Date(data.heartbeat.last_active);
+          const now = new Date();
+          const diffMin = (now - lastActive) / (1000 * 60);
 
+          setIsOnline(diffMin <= 3);
+        }
       } catch (err) {
-        console.error("Error fetching motor log + heartbeat:", err);
+        console.error("Error fetching motor log + heartbeat + pzem:", err);
       }
     };
 
@@ -112,14 +114,39 @@ if (data.heartbeat?.last_active) {
     (key) =>
       !displayFields.includes(key) &&
       key !== "email" &&
-      key !== "motorSchedule"
+      key !== "motorSchedule" &&
+      key !== "motorSchedule2"
   );
 
   return (
-    <div className="container">
+    <div className="container" style={{ position: "relative" }}>
+<div className="live-dashboard">
+
+  <div className="grid-3col">
+    <div className="metric">
+      
+      <span className="label">Voltage : </span>
+      <span className="value">{pzem ? `${pzem.voltage} V` : "N/A"}</span>
+    </div>
+
+    <div className="metric">
+      
+      <span className="label">Current : </span>
+      <span className="value">{pzem ? `${pzem.current} A` : "N/A"}</span>
+    </div>
+
+    <div className="metric">
+   
+      <span className="label">Power : </span>
+      <span className="value">{pzem ? `${pzem.power} W` : "N/A"}</span>
+    </div>
+  </div>
+</div>
+
+
+
       <h3>Your Data</h3>
 
-      {}
       <div className="inline-fields">
         {displayFields.map((key) => (
           <div key={key} className="inline-field">
@@ -130,54 +157,53 @@ if (data.heartbeat?.last_active) {
           </div>
         ))}
 
-        {}
         {formData.motorSchedule?.schedules &&
           formData.motorSchedule.schedules.slice(0, 2).map((schedule, index) => (
             <div key={index} className="schedule-inline-block">
-              <label>
-                Start Hour:
-                <input
-                  type="number"
-                  value={schedule.startHour}
-                  disabled={!isOnline} 
-                  onChange={(e) =>
-                    handleScheduleChange(index, "startHour", e.target.value)
-                  }
-                />
-              </label>
-              <label>
-                Start Minute:
-                <input
-                  type="number"
-                  value={schedule.startMin}
-                  disabled={!isOnline} 
-                  onChange={(e) =>
-                    handleScheduleChange(index, "startMin", e.target.value)
-                  }
-                />
-              </label>
-              <label>
-                Duration:
-                <input
-                  type="number"
-                  value={schedule.duration}
-                  disabled={!isOnline} 
-                  onChange={(e) =>
-                    handleScheduleChange(index, "duration", e.target.value)
-                  }
-                />
-              </label>
+              <div className="schedule-title">
+                <h4>{index === 0 ? "Morning" : "Night"}</h4>
+              </div>
+              <div className="schedule-fields">
+                <label>
+                  Start Hour:
+                  <input
+                    type="number"
+                    value={schedule.startHour}
+                    disabled={!isOnline}
+                    onChange={(e) =>
+                      handleScheduleChange(index, "startHour", e.target.value)
+                    }
+                  />
+                </label>
+                <label>
+                  Start Minute:
+                  <input
+                    type="number"
+                    value={schedule.startMin}
+                    disabled={!isOnline}
+                    onChange={(e) =>
+                      handleScheduleChange(index, "startMin", e.target.value)
+                    }
+                  />
+                </label>
+                <label>
+                  Duration:
+                  <input
+                    type="number"
+                    value={schedule.duration}
+                    disabled={!isOnline}
+                    onChange={(e) =>
+                      handleScheduleChange(index, "duration", e.target.value)
+                    }
+                  />
+                </label>
+              </div>
             </div>
           ))}
       </div>
 
-      {!isOnline && (
-        <p className="warning">
-          Device is offline 
-        </p>
-      )}
+      {!isOnline && <p className="warning">Device is offline</p>}
 
-      {}
       {otherFields.map((key) => (
         <div key={key}>
           <label>
@@ -192,7 +218,6 @@ if (data.heartbeat?.last_active) {
         </div>
       ))}
 
-      {}
       <button onClick={handleSave} disabled={!isOnline}>
         Save
       </button>
@@ -202,7 +227,6 @@ if (data.heartbeat?.last_active) {
         </p>
       )}
 
-      {}
       <div className="status-container">
         {heartbeat && (
           <div className="heartbeat">
