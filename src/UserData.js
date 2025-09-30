@@ -49,6 +49,7 @@ export default function UserData({ user, onLogout }) {
           const now = new Date();
           const diffMin = (now - lastActive) / (1000 * 60);
 
+          // mark device offline if no update in last 4 minutes
           setIsOnline(diffMin <= 4);
         }
       } catch (err) {
@@ -280,12 +281,18 @@ export default function UserData({ user, onLogout }) {
               Status:{" "}
               <span
                 className={
-                  motorLog.motor_status === 1
-                    ? "status-running"
-                    : "status-stopped"
+                  isOnline
+                    ? motorLog.motor_status === 1
+                      ? "status-running"
+                      : "status-stopped"
+                    : "status-unknown"
                 }
               >
-                {motorLog.motor_status === 1 ? "Running" : "Stopped"}
+                {isOnline
+                  ? motorLog.motor_status === 1
+                    ? "Running"
+                    : "Stopped"
+                  : "Unknown (device offline)"}
               </span>
             </p>
             <p>Time: {motorLog.timestamp}</p>

@@ -348,3 +348,8 @@ hr {
   display: block;
   margin-top: 4px;
 }
+.status-unknown {
+  color: #ffc107; /* yellow/orange */
+  font-weight: bold;
+  font-style: italic;
+}
