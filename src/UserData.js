@@ -13,10 +13,6 @@ export default function UserData({ user, onLogout }) {
   const [pzem, setPzem] = useState(null); // 🔌 Voltage/Current/Power
   const [isOnline, setIsOnline] = useState(false);
 
-  // const [isRunning, setIsRunning] = useState(false);
-  // const [countdown, setCountdown] = useState(null);
-  // const [motorDuration, setMotorDuration] = useState(30);
-
   // Load user profile from realtime db
   useEffect(() => {
     const userRef = ref(database, `user/${user.uid}`);
@@ -53,7 +49,7 @@ export default function UserData({ user, onLogout }) {
           const now = new Date();
           const diffMin = (now - lastActive) / (1000 * 60);
 
-          setIsOnline(diffMin <= 3);
+          setIsOnline(diffMin <= 4);
         }
       } catch (err) {
         console.error("Error fetching motor log + heartbeat + pzem:", err);
@@ -71,6 +67,15 @@ export default function UserData({ user, onLogout }) {
   };
 
   const handleScheduleChange = (index, field, value) => {
+    // Prevent more digits than allowed
+    if (
+      (field === "startHour" && value.length > 2) ||
+      (field === "startMin" && value.length > 2) ||
+      (field === "duration" && value.length > 3)
+    ) {
+      return;
+    }
+
     const updatedSchedules = [...formData.motorSchedule.schedules];
     updatedSchedules[index] = {
       ...updatedSchedules[index],
@@ -87,8 +92,39 @@ export default function UserData({ user, onLogout }) {
   };
 
   const handleSave = async () => {
-    if (!isOnline) return;
+    if (!isOnline) {
+      setSaveStatus("Device is offline, cannot save.");
+      return;
+    }
 
+    // ✅ Validation
+    if (formData.motorSchedule?.schedules) {
+      for (let i = 0; i < formData.motorSchedule.schedules.length; i++) {
+        const schedule = formData.motorSchedule.schedules[i];
+        const { startHour, startMin, duration } = schedule;
+
+        if (startHour < 6 || startHour > 23) {
+          setSaveStatus(
+            `Error: Schedule ${i + 1} start hour must be between 6 and 23.`
+          );
+          return;
+        }
+        if (startMin < 0 || startMin > 59) {
+          setSaveStatus(
+            `Error: Schedule ${i + 1} start minute must be between 0 and 59.`
+          );
+          return;
+        }
+        if (duration < 0 || duration > 120) {
+          setSaveStatus(
+            `Error: Schedule ${i + 1} duration must be between 0 and 120 minutes.`
+          );
+          return;
+        }
+      }
+    }
+
+    // ✅ Proceed with saving
     const userRef = ref(database, `user/${user.uid}`);
     const dataToSave = { ...formData, id: "01", name: "Salgare" };
 
@@ -114,35 +150,29 @@ export default function UserData({ user, onLogout }) {
     (key) =>
       !displayFields.includes(key) &&
       key !== "email" &&
-      key !== "motorSchedule" 
+      key !== "motorSchedule"
   );
 
   return (
     <div className="container" style={{ position: "relative" }}>
-<div className="live-dashboard">
+      <div className="live-dashboard">
+        <div className="grid-3col">
+          <div className="metric">
+            <span className="label">Voltage : </span>
+            <span className="value">{pzem ? `${pzem.voltage} V` : "N/A"}</span>
+          </div>
 
-  <div className="grid-3col">
-    <div className="metric">
-      
-      <span className="label">Voltage : </span>
-      <span className="value">{pzem ? `${pzem.voltage} V` : "N/A"}</span>
-    </div>
+          <div className="metric">
+            <span className="label">Current : </span>
+            <span className="value">{pzem ? `${pzem.current} A` : "N/A"}</span>
+          </div>
 
-    <div className="metric">
-      
-      <span className="label">Current : </span>
-      <span className="value">{pzem ? `${pzem.current} A` : "N/A"}</span>
-    </div>
-
-    <div className="metric">
-   
-      <span className="label">Power : </span>
-      <span className="value">{pzem ? `${pzem.power} W` : "N/A"}</span>
-    </div>
-  </div>
-</div>
-
-
+          <div className="metric">
+            <span className="label">Power : </span>
+            <span className="value">{pzem ? `${pzem.power} W` : "N/A"}</span>
+          </div>
+        </div>
+      </div>
 
       <h3>Your Data</h3>
 
@@ -167,6 +197,7 @@ export default function UserData({ user, onLogout }) {
                   Start Hour:
                   <input
                     type="number"
+                    maxLength="2"
                     value={schedule.startHour}
                     disabled={!isOnline}
                     onChange={(e) =>
@@ -178,6 +209,7 @@ export default function UserData({ user, onLogout }) {
                   Start Minute:
                   <input
                     type="number"
+                    maxLength="2"
                     value={schedule.startMin}
                     disabled={!isOnline}
                     onChange={(e) =>
@@ -189,6 +221,7 @@ export default function UserData({ user, onLogout }) {
                   Duration:
                   <input
                     type="number"
+                    maxLength="3"
                     value={schedule.duration}
                     disabled={!isOnline}
                     onChange={(e) =>
